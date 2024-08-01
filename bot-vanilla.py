@@ -86,7 +86,7 @@ async def enviar_ou_editar_mensagem_inicial():
     if canal_prova_aluno:
         mensagem_inicial = None
         async for message in canal_prova_aluno.history(limit=10):
-            if message.author == bot.user and message.embeds and message.embeds[0].title == "Benny's Originals: Prova":
+            if message.author == bot.user and message.embeds and message.embeds[0].title == "Vanilla: Prova":
                 mensagem_inicial = message
                 break
 
@@ -116,6 +116,5 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     if not verificar_interacao.is_running():
         verificar_interacao.start()
-
 # Rodar o bot com o token do ambiente
 bot.run(os.getenv("DISCORD_TOKEN"))
