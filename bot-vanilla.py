@@ -74,9 +74,16 @@ async def iniciar_prova(user, channel):
 
         if nome_na_cidade != "não respondida" and id_na_cidade != "não respondida":
             novo_nome = f"{nome_na_cidade} #{id_na_cidade}"
-            await user.edit(nick=novo_nome)
-            await user.remove_roles(discord.Object(id=cargo_em_analise_id))
-            await user.add_roles(discord.Object(id=cargo_membro_id))
+            try:
+                await user.edit(nick=novo_nome)
+            except discord.Forbidden:
+                logging.error(f"Permissão negada para alterar o apelido de {user.display_name}")
+
+            try:
+                await user.remove_roles(discord.Object(id=cargo_em_analise_id))
+                await user.add_roles(discord.Object(id=cargo_membro_id))
+            except discord.Forbidden:
+                logging.error(f"Permissão negada para alterar os cargos de {user.display_name}")
         
         await channel.send("Prova concluída! O canal será fechado em 10 segundos.")
     except asyncio.TimeoutError:
