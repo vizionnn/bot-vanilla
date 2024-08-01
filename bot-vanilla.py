@@ -35,6 +35,20 @@ questoes_abertas = [
     "Qual seu passaporte na cidade (ID)?",
 ]
 
+# Arquivo para armazenar o ID da mensagem inicial
+ID_ARQUIVO = 'mensagem_inicial_id.json'
+
+def salvar_id_mensagem(mensagem_id):
+    with open(ID_ARQUIVO, 'w') as f:
+        json.dump({'mensagem_id': mensagem_id}, f)
+
+def carregar_id_mensagem():
+    if os.path.exists(ID_ARQUIVO):
+        with open(ID_ARQUIVO, 'r') as f:
+            data = json.load(f)
+            return data.get('mensagem_id')
+    return None
+
 class ProvaView(discord.ui.View):
     def __init__(self, bot, user):
         super().__init__(timeout=None)
@@ -84,11 +98,14 @@ async def iniciar_prova(user, channel):
 async def enviar_ou_editar_mensagem_inicial():
     canal_prova_aluno = bot.get_channel(canal_prova_aluno_id)
     if canal_prova_aluno:
+        mensagem_inicial_id = carregar_id_mensagem()
         mensagem_inicial = None
-        async for message in canal_prova_aluno.history(limit=10):
-            if message.author == bot.user and message.embeds and message.embeds[0].title == "Vanilla: Prova":
-                mensagem_inicial = message
-                break
+
+        if mensagem_inicial_id:
+            try:
+                mensagem_inicial = await canal_prova_aluno.fetch_message(mensagem_inicial_id)
+            except discord.NotFound:
+                mensagem_inicial = None
 
         embed = discord.Embed(title="Vanilla: Prova", description="Você terá 3 minutos para iniciar a prova após clicar no botão.", color=discord.Color.light_grey())
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/1215880368167718993/c274073554a24903ae2aa8f51e38a635.webp")
@@ -100,7 +117,8 @@ async def enviar_ou_editar_mensagem_inicial():
         if mensagem_inicial:
             await mensagem_inicial.edit(embed=embed, view=view)
         else:
-            await canal_prova_aluno.send(embed=embed, view=view)
+            nova_mensagem = await canal_prova_aluno.send(embed=embed, view=view)
+            salvar_id_mensagem(nova_mensagem.id)
 
 @tasks.loop(minutes=3)
 async def verificar_interacao():
@@ -116,5 +134,6 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     if not verificar_interacao.is_running():
         verificar_interacao.start()
+
 # Rodar o bot com o token do ambiente
 bot.run(os.getenv("DISCORD_TOKEN"))
