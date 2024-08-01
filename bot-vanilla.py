@@ -54,7 +54,7 @@ async def iniciar_prova(user, channel):
     respostas = {}
 
     for questao in questoes_abertas:
-        embed = discord.Embed(title="Questão Aberta", description=f"{questao}", color=discord.Color.light_grey())
+        embed = discord.Embed(title="Questão Aberta", description=f"{questao}", color=0xFFC2FF)
         await channel.send(embed=embed)
         try:
             msg = await bot.wait_for('message', timeout=180.0, check=lambda m: m.author == user)
@@ -75,7 +75,7 @@ async def iniciar_prova(user, channel):
         for questao in questoes_abertas:
             embed.add_field(name=questao, value=f"R: {respostas.get(questao, 'não respondida')}", inline=False)
 
-        embed.set_thumbnail(url="https://media.discordapp.net/attachments/1137047344903372941/1238973673671622666/marvel_gif_2.gif")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/1215880368167718993/c274073554a24903ae2aa8f51e38a635.webp")
         await _corrigir_prova.send(embed=embed)
 
     await channel.send("Prova concluída! Contate um gerente. O canal será fechado em 10 segundos.")
@@ -91,7 +91,7 @@ async def enviar_ou_editar_mensagem_inicial():
                 mensagem_inicial = message
                 break
 
-        embed = discord.Embed(title="Vanilla: Prova", description="Você terá 3 minutos para iniciar a prova após clicar no botão.", color=discord.Color.light_grey())
+        embed = discord.Embed(title="Vanilla: Prova", description="Você terá 3 minutos para iniciar a prova após clicar no botão.", color=0xFFC2FF)
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/1215880368167718993/c274073554a24903ae2aa8f51e38a635.webp")
         embed.set_image(url="https://cdn.discordapp.com/attachments/1218681672699220108/1226962867022987395/gif_animado.gif?ex=66abd4b7&is=66aa8337&hm=d351447bebc168606741b0b79d9051bd611239e6ecd3c76582fc6d20dcbcfdf6&")
         embed.set_footer(text="Faça sua parte e se junte a maior família da cidade!")
