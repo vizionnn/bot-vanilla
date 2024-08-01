@@ -21,12 +21,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 cargo_em_analise_id = 1267282437315104911
 cargo_membro_id = 1267282437315104917
-canal_prova_aluno_id = 1267282438074273794
-canal_corrigir_prova_id = 1235035965945413649
-cargo_visualizacao_1_id = 1267282437411700828
-cargo_visualizacao_2_id = 1267282437411700829
-cargo_prova_id = 1267282437352849539
+canal_solicitar_set = 1267282438074273794
+moderator_roles_ids = [
+    1267282437411700828,
+    1267282437411700827,
+    1267282437411700829,
+    1267282437352849539,
+]
 
+# Questões da prova
 questoes_abertas = [
     "Qual seu nome na cidade?",
     "Qual seu passaporte na cidade (ID)?",
@@ -36,10 +39,11 @@ questoes_abertas = [
 embed_color = discord.Color.from_rgb(255, 194, 255)
 
 class ProvaView(View):
-    def __init__(self, bot, user):
+    def __init__(self, bot, user, moderator_roles_ids):
         super().__init__()
         self.bot = bot
         self.user = user
+        self.moderator_roles_ids = moderator_roles_ids
 
     @discord.ui.button(label="Realizar Prova", style=discord.ButtonStyle.green)
     async def realizar_prova(self, interaction: discord.Interaction, button: Button):
@@ -48,7 +52,7 @@ class ProvaView(View):
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
-        for role_id in moderator_roles_ids:
+        for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
             overwrites[role] = discord.PermissionOverwrite(read_messages=True)
         
@@ -82,10 +86,10 @@ async def iniciar_prova(user, channel):
         await channel.delete()
 
 async def enviar_ou_editar_mensagem_inicial():
-    canal_prova_aluno = bot.get_channel(canal_prova_aluno_id)
-    if canal_prova_aluno:
+    canal_prova = bot.get_channel(canal_solicitar_set)
+    if canal_prova:
         mensagem_inicial = None
-        async for message in canal_prova_aluno.history(limit=10):
+        async for message in canal_prova.history(limit=10):
             if message.author == bot.user and message.embeds and message.embeds[0].title == "Vanilla: Prova":
                 mensagem_inicial = message
                 break
@@ -99,12 +103,12 @@ async def enviar_ou_editar_mensagem_inicial():
         embed.set_image(url="https://cdn.discordapp.com/attachments/1218681672699220108/1226962867022987395/gif_animado.gif?ex=66abd4b7&is=66aa8337&hm=d351447bebc168606741b0b79d9051bd611239e6ecd3c76582fc6d20dcbcfdf6&")
         embed.set_footer(text="Faça sua parte e se junte a maior família da cidade!")
 
-        view = ProvaView(bot, None)
+        view = ProvaView(bot, None, moderator_roles_ids)
 
         if mensagem_inicial:
             await mensagem_inicial.edit(embed=embed, view=view)
         else:
-            await canal_prova_aluno.send(embed=embed, view=view)
+            await canal_prova.send(embed=embed, view=view)
 
 @tasks.loop(minutes=3)
 async def verificar_interacao():
