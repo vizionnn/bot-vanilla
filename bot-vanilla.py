@@ -27,6 +27,9 @@ cargo_visualizacao_1_id = 1267282437411700828
 cargo_visualizacao_2_id = 1267282437411700829
 cargo_prova_id = 1267282437352849539
 
+# Definindo a cor rosa para os embeds
+embed_color = discord.Color.from_rgb(255, 194, 255)
+
 questoes_abertas = [
     "Qual seu nome na cidade?",
     "Qual seu passaporte na cidade (ID)?",
