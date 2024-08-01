@@ -67,17 +67,6 @@ async def iniciar_prova(user, channel):
             return
         await channel.purge(limit=100)
 
-    _corrigir_prova = bot.get_channel(canal_corrigir_prova_id)
-    if _corrigir_prova:
-        embed = discord.Embed(title="Relatório de Prova", color=discord.Color.light_grey())
-        embed.add_field(name="Prova realizada por", value=f"{user.mention} | {user.id}", inline=False)
-
-        for questao in questoes_abertas:
-            embed.add_field(name=questao, value=f"R: {respostas.get(questao, 'não respondida')}", inline=False)
-
-        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/1215880368167718993/c274073554a24903ae2aa8f51e38a635.webp")
-        await _corrigir_prova.send(embed=embed)
-
     await channel.send("Prova concluída! Contate um gerente. O canal será fechado em 10 segundos.")
     await asyncio.sleep(10)
     await channel.delete()
