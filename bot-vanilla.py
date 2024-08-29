@@ -102,14 +102,13 @@ async def enviar_ou_editar_mensagem_inicial():
                 break
 
         embed = discord.Embed(
-            title="Vanilla: Prova", 
+            title="Bahamas: Prova", 
             description="Você terá 3 minutos para iniciar a prova após clicar no botão.", 
             color=embed_color
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/1215880368167718993/c274073554a24903ae2aa8f51e38a635.webp")
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1218681672699220108/1226962867022987395/gif_animado.gif?ex=66abd4b7&is=66aa8337&hm=d351447bebc168606741b0b79d9051bd611239e6ecd3c76582fc6d20dcbcfdf6&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1221188346206748753/1278505779787206656/image.png?ex=66d10ccb&is=66cfbb4b&hm=5515a3d49f147b0730f2465d4c2f2bd118dc3ae5b79001468dc85b89964b48c9&")
         embed.set_footer(text="Faça sua parte e se junte a maior família da cidade!")
-
+        
         view = ProvaView(bot, None, moderator_roles_ids)
 
         if mensagem_inicial:
