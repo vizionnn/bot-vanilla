@@ -96,8 +96,8 @@ async def enviar_ou_editar_mensagem_inicial():
     canal_prova = bot.get_channel(canal_solicitar_set)
     if canal_prova:
         mensagem_inicial = None
-        async for message in canal_prova.history(limit=10):
-            if message.author == bot.user and message.embeds and message.embeds[0].title == "Vanilla: Prova":
+        async for message in canal_prova.history(limit=20):
+            if message.author == bot.user and message.embeds and message.embeds[0].title == "Bahamas: Prova":
                 mensagem_inicial = message
                 break
 
@@ -106,16 +106,20 @@ async def enviar_ou_editar_mensagem_inicial():
             description="Você terá 3 minutos para iniciar a prova após clicar no botão.", 
             color=embed_color
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1221188346206748753/1278505779787206656/image.png?ex=66d10ccb&is=66cfbb4b&hm=5515a3d49f147b0730f2465d4c2f2bd118dc3ae5b79001468dc85b89964b48c9&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1221188346206748753/1278505779787206656/image.png")
         embed.set_footer(text="Faça sua parte e se junte a maior família da cidade!")
         
         view = ProvaView(bot, None, moderator_roles_ids)
 
         if mensagem_inicial:
+            # Editar a mensagem existente
             await mensagem_inicial.edit(embed=embed, view=view)
+            print("Mensagem existente editada.")
         else:
+            # Enviar uma nova mensagem se não existir
             await canal_prova.send(embed=embed, view=view)
-
+            print("Nova mensagem enviada.")
+            
 @tasks.loop(minutes=3)
 async def verificar_interacao():
     await enviar_ou_editar_mensagem_inicial()
