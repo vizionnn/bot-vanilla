@@ -1,24 +1,20 @@
 import discord
 from discord.ext import commands, tasks
-from discord import app_commands
-from discord.ui import Button, View, Select, Modal, TextInput
+from discord.ui import Button, View
 from discord.utils import get
 import logging
-import pytz
-import re
 import os
-import json
-from dotenv import load_dotenv
 import asyncio
-import sqlite3
-from datetime import datetime, timezone, timedelta
+from dotenv import load_dotenv
 
+# Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
 # Configurações dos intents
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# IDs dos cargos e canais
 cargo_em_analise_id = 1267282437315104911
 cargo_membro_id = 1267282437315104917
 canal_solicitar_set = 1267282438074273794
@@ -39,7 +35,7 @@ questoes_abertas = [
 embed_color = discord.Color.from_rgb(255, 194, 255)
 
 class ProvaView(View):
-    def __init__(self, bot, user, moderator_roles_ids):
+    def __init__(self, bot, user=None, moderator_roles_ids=None):
         super().__init__()
         self.bot = bot
         self.user = user
@@ -76,14 +72,18 @@ async def iniciar_prova(user, channel):
             novo_nome = f"{nome_na_cidade} #{id_na_cidade}"
             try:
                 await user.edit(nick=novo_nome)
+                print(f"Apelido alterado para {novo_nome}")
             except discord.Forbidden:
-                logging.error(f"Permissão negada para alterar o apelido de {user.display_name}")
+                print(f"Permissão negada para alterar o apelido de {user.display_name}")
 
             try:
-                await user.remove_roles(discord.Object(id=cargo_em_analise_id))
-                await user.add_roles(discord.Object(id=cargo_membro_id))
+                cargo_em_analise = discord.Object(id=cargo_em_analise_id)
+                cargo_membro = discord.Object(id=cargo_membro_id)
+                await user.remove_roles(cargo_em_analise)
+                await user.add_roles(cargo_membro)
+                print(f"Cargo 'membro' adicionado e 'em análise' removido para {user.display_name}")
             except discord.Forbidden:
-                logging.error(f"Permissão negada para alterar os cargos de {user.display_name}")
+                print(f"Permissão negada para alterar os cargos de {user.display_name}")
         
         await channel.send("Prova concluída! O canal será fechado em 10 segundos.")
     except asyncio.TimeoutError:
@@ -127,7 +127,11 @@ async def verificar_interacao():
 @bot.event
 async def on_member_join(member):
     cargo_em_analise = member.guild.get_role(cargo_em_analise_id)
-    await member.add_roles(cargo_em_analise)
+    if cargo_em_analise:
+        await member.add_roles(cargo_em_analise)
+        print(f"{member.display_name} recebeu o cargo 'em análise'.")
+    else:
+        print("Cargo 'em análise' não encontrado.")
 
 @bot.event
 async def on_ready():
