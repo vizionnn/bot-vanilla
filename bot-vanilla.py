@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands, tasks
 from discord.ui import Button, View, Select
-from discord.utils import get
-import logging
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -33,12 +31,6 @@ funcoes_cargos = {
     "Trabalhador": 1267282437352849530
 }
 
-# Questões da prova
-questoes_abertas = [
-    "Qual seu nome na cidade?",
-    "Qual seu passaporte na cidade (ID)?",
-]
-
 # Definindo a cor rosa para os embeds
 embed_color = discord.Color.from_rgb(255, 194, 255)
 
@@ -52,21 +44,34 @@ class ProvaView(View):
     @discord.ui.button(label="Realizar Prova", style=discord.ButtonStyle.green)
     async def realizar_prova(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Iniciando sua prova!", ephemeral=True)
+        
+        # Definir permissões
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
+        
+        # Verificar se os cargos moderadores existem antes de adicionar as permissões
         for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
-            overwrites[role] = discord.PermissionOverwrite(read_messages=True)
+            if role:  # Garantir que o cargo existe
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True)
         
-        channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
-        await iniciar_prova(interaction.user, channel)
+        # Criar o canal
+        try:
+            channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
+            await iniciar_prova(interaction.user, channel)
+        except Exception as e:
+            print(f"Erro ao criar canal de prova: {e}")
 
 async def iniciar_prova(user, channel):
     respostas = {}
     try:
         # Perguntas abertas
+        questoes_abertas = [
+            "Qual seu nome na cidade?",
+            "Qual seu passaporte na cidade (ID)?",
+        ]
         for questao in questoes_abertas:
             embed = discord.Embed(title="Questão Aberta", description=f"{questao}", color=embed_color)
             await channel.send(embed=embed)
