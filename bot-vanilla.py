@@ -44,6 +44,7 @@ class ProvaView(View):
     @discord.ui.button(label="Realizar Prova", style=discord.ButtonStyle.green)
     async def realizar_prova(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Iniciando sua prova!", ephemeral=True)
+
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
@@ -51,9 +52,15 @@ class ProvaView(View):
         for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
             overwrites[role] = discord.PermissionOverwrite(read_messages=True)
-        
-        channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
-        await iniciar_prova(interaction.user, channel)
+
+        try:
+            # Criação do canal temporário para a prova
+            channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
+            print(f"Canal criado: {channel.name} para {interaction.user.display_name}")
+            await iniciar_prova(interaction.user, channel)
+        except Exception as e:
+            print(f"Erro ao criar canal de prova: {e}")
+            await interaction.followup.send("Ocorreu um erro ao iniciar sua prova. Por favor, tente novamente mais tarde.", ephemeral=True)
 
 async def iniciar_prova(user, channel):
     respostas = {}
@@ -97,12 +104,12 @@ async def enviar_ou_editar_mensagem_inicial():
     if canal_prova:
         mensagem_inicial = None
         async for message in canal_prova.history(limit=20):
-            if message.author == bot.user and message.embeds and message.embeds[0].title == "Bahamas: Prova":
+            if message.author == bot.user and message.embeds and message.embeds[0].title == "Vanilla: Prova":
                 mensagem_inicial = message
                 break
 
         embed = discord.Embed(
-            title="Bahamas: Prova", 
+            title="Vanilla: Prova", 
             description="Você terá 3 minutos para iniciar a prova após clicar no botão.", 
             color=embed_color
         )
