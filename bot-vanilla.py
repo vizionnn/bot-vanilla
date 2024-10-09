@@ -1,10 +1,8 @@
 import discord
 from discord.ext import commands, tasks
 from discord.ui import Button, View
-from discord.utils import get
-import logging
-import os
 import asyncio
+import os
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
@@ -45,13 +43,19 @@ class ProvaView(View):
     async def realizar_prova(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Iniciando sua prova!", ephemeral=True)
 
+        # Garantir que o canal seja criado com permissões corretas
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
             interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
+
+        # Garantir que os cargos moderadores existam
         for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
-            overwrites[role] = discord.PermissionOverwrite(read_messages=True)
+            if role is not None:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True)
+            else:
+                print(f"Erro: Cargo com ID {role_id} não encontrado.")
 
         try:
             # Criação do canal temporário para a prova
