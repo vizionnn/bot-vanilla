@@ -129,7 +129,7 @@ class SelectView(View):
             discord.SelectOption(label="Bar", description="Trabalhar no bar"),
             discord.SelectOption(label="Segurança", description="Trabalhar como segurança"),
             discord.SelectOption(label="Dançarina", description="Trabalhar como dançarina"),
-            discord.SelectOption(label="Trabalhador", description="Trabalhar como trabalhador geral")
+            discord.SelectOption(label="Job", description="Trabalhar como do Job")
         ]
     )
     async def select_callback(self, interaction: discord.Interaction, select):
