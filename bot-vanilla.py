@@ -1,8 +1,10 @@
 import discord
 from discord.ext import commands, tasks
-from discord.ui import Button, View
-import asyncio
+from discord.ui import Button, View, Select
+from discord.utils import get
+import logging
 import os
+import asyncio
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
@@ -23,6 +25,14 @@ moderator_roles_ids = [
     1267282437352849539,
 ]
 
+# IDs das funções para a terceira pergunta
+funcoes_cargos = {
+    "Bar": 1267282437352849531,
+    "Segurança": 1293679552664567838,
+    "Dançarina": 1267282437352849532,
+    "Trabalhador": 1267282437352849530
+}
+
 # Questões da prova
 questoes_abertas = [
     "Qual seu nome na cidade?",
@@ -42,40 +52,38 @@ class ProvaView(View):
     @discord.ui.button(label="Realizar Prova", style=discord.ButtonStyle.green)
     async def realizar_prova(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Iniciando sua prova!", ephemeral=True)
-
-        # Garantir que o canal seja criado com permissões corretas
         overwrites = {
-            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),  # Bloquear todos os membros por padrão
-            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)  # Permitir que o usuário veja e envie mensagens
+            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
-
-        # Garantir que os cargos moderadores tenham acesso
         for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
-            if role is not None:
-                overwrites[role] = discord.PermissionOverwrite(read_messages=True)
-            else:
-                print(f"Erro: Cargo com ID {role_id} não encontrado.")
-
-        try:
-            # Criação do canal temporário para a prova
-            channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
-            print(f"Canal criado: {channel.name} para {interaction.user.display_name}")
-            await iniciar_prova(interaction.user, channel)
-        except Exception as e:
-            print(f"Erro ao criar canal de prova: {e}")
-            await interaction.followup.send("Ocorreu um erro ao iniciar sua prova. Por favor, tente novamente mais tarde.", ephemeral=True)
+            overwrites[role] = discord.PermissionOverwrite(read_messages=True)
+        
+        channel = await interaction.guild.create_text_channel(f"prova-{interaction.user.display_name}", overwrites=overwrites)
+        await iniciar_prova(interaction.user, channel)
 
 async def iniciar_prova(user, channel):
     respostas = {}
     try:
+        # Perguntas abertas
         for questao in questoes_abertas:
             embed = discord.Embed(title="Questão Aberta", description=f"{questao}", color=embed_color)
             await channel.send(embed=embed)
             msg = await bot.wait_for('message', timeout=180.0, check=lambda m: m.author == user)
             respostas[questao] = msg.content
-            await channel.purge(limit=100)
         
+        # Pergunta de função (última pergunta com Select)
+        embed = discord.Embed(title="Questão Final", description="3. Qual função deseja desempenhar? Selecione uma das quatro opções:", color=embed_color)
+        view = SelectView(user)
+        await channel.send(embed=embed, view=view)
+        
+        # Aguarda a seleção da função
+        await view.wait()
+        funcao_escolhida = view.valor_selecionado
+        respostas["Função"] = funcao_escolhida
+
+        # Atualizar nickname e adicionar cargos
         nome_na_cidade = respostas.get(questoes_abertas[0], "não respondida")
         id_na_cidade = respostas.get(questoes_abertas[1], "não respondida")
 
@@ -90,9 +98,10 @@ async def iniciar_prova(user, channel):
             try:
                 cargo_em_analise = discord.Object(id=cargo_em_analise_id)
                 cargo_membro = discord.Object(id=cargo_membro_id)
+                cargo_funcao = discord.Object(id=funcoes_cargos[funcao_escolhida])
                 await user.remove_roles(cargo_em_analise)
-                await user.add_roles(cargo_membro)
-                print(f"Cargo 'membro' adicionado e 'em análise' removido para {user.display_name}")
+                await user.add_roles(cargo_membro, cargo_funcao)
+                print(f"Cargo '{funcao_escolhida}' e 'membro' adicionados, 'em análise' removido para {user.display_name}")
             except discord.Forbidden:
                 print(f"Permissão negada para alterar os cargos de {user.display_name}")
         
@@ -102,6 +111,26 @@ async def iniciar_prova(user, channel):
     finally:
         await asyncio.sleep(10)
         await channel.delete()
+
+class SelectView(View):
+    def __init__(self, user):
+        super().__init__(timeout=60)
+        self.valor_selecionado = None
+        self.user = user
+
+    @discord.ui.select(
+        placeholder="Selecione sua função...",
+        options=[
+            discord.SelectOption(label="Bar", description="Trabalhar no bar"),
+            discord.SelectOption(label="Segurança", description="Trabalhar como segurança"),
+            discord.SelectOption(label="Dançarina", description="Trabalhar como dançarina"),
+            discord.SelectOption(label="Trabalhador", description="Trabalhar como trabalhador geral")
+        ]
+    )
+    async def select_callback(self, interaction: discord.Interaction, select):
+        self.valor_selecionado = select.values[0]
+        await interaction.response.send_message(f"Você escolheu: {self.valor_selecionado}", ephemeral=True)
+        self.stop()
 
 async def enviar_ou_editar_mensagem_inicial():
     canal_prova = bot.get_channel(canal_solicitar_set)
@@ -123,11 +152,9 @@ async def enviar_ou_editar_mensagem_inicial():
         view = ProvaView(bot, None, moderator_roles_ids)
 
         if mensagem_inicial:
-            # Editar a mensagem existente
             await mensagem_inicial.edit(embed=embed, view=view)
             print("Mensagem existente editada.")
         else:
-            # Enviar uma nova mensagem se não existir
             await canal_prova.send(embed=embed, view=view)
             print("Nova mensagem enviada.")
             
