@@ -45,11 +45,11 @@ class ProvaView(View):
 
         # Garantir que o canal seja criado com permissões corretas
         overwrites = {
-            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),  # Bloquear todos os membros por padrão
+            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)  # Permitir que o usuário veja e envie mensagens
         }
 
-        # Garantir que os cargos moderadores existam
+        # Garantir que os cargos moderadores tenham acesso
         for role_id in self.moderator_roles_ids:
             role = interaction.guild.get_role(role_id)
             if role is not None:
